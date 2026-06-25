@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { cutout } from '@/lib/capture/cutout'
 import { trimTransparent } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
@@ -10,6 +11,7 @@ type Status = 'idle' | 'processing' | 'done' | 'error'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export function Capture() {
+  const queryClient = useQueryClient()
   const [status, setStatus] = useState<Status>('idle')
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
@@ -63,6 +65,7 @@ export function Capture() {
       })
       setSavedDexNo(saved.dexNo)
       setSaveStatus('saved')
+      queryClient.invalidateQueries({ queryKey: ['my-cards'] })
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : '알 수 없는 오류')
       setSaveStatus('error')

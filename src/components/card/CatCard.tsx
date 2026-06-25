@@ -2,6 +2,7 @@ import type { NewCatCard } from '@/types'
 import type { BgTheme } from '@/lib/backgrounds/theme'
 import { popartStyle } from '@/lib/backgrounds/popart'
 import { RarityBadge } from './RarityBadge'
+import { cutoutFeather } from './cutoutFeather'
 
 interface CatCardProps {
   card: NewCatCard
@@ -20,7 +21,8 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
       <img
         src={cutoutUrl}
         alt={card.name ?? '고양이 카드'}
-        className="absolute left-1/2 top-[46%] max-h-[82%] max-w-[94%] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.35)]"
+        className="absolute left-1/2 top-[46%] max-h-[82%] max-w-[94%] -translate-x-1/2 -translate-y-1/2 object-contain"
+        style={cutoutFeather}
       />
       <span className="absolute left-2.5 top-2.5">
         <RarityBadge rarity={card.rarity} />
