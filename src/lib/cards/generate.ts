@@ -5,6 +5,7 @@ import { computeRarity } from './rarity'
 import { resolveTribe, type Tribe } from './tribe'
 import { makeAbility } from './ability'
 import { generateName } from './name'
+import { getFood, DEFAULT_FOOD, type FoodId } from './food'
 
 export interface GenerateInput {
   /** 재현용 시드 (예: 사진 파일 해시 또는 캡처 uuid) */
@@ -14,6 +15,7 @@ export interface GenerateInput {
   context: CaptureContext
   tribeHint?: Tribe
   firstDiscovery?: boolean
+  foodId?: FoodId
   name?: string | null
 }
 
@@ -29,9 +31,12 @@ export interface GenerateResult {
 export function generateCard(input: GenerateInput): GenerateResult {
   const { seed, context } = input
 
+  const food = getFood(input.foodId ?? DEFAULT_FOOD)
   const stats = computeStats(seed, context)
   const { rarity, reasons } = computeRarity(stats, context, {
     firstDiscovery: input.firstDiscovery,
+    foodBonus: food.bonus,
+    foodLabel: food.label,
   })
   const tribe = resolveTribe(input.tribeHint)
   const bgTheme = pickBgTheme(context)

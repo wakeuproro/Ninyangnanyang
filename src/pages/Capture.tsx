@@ -5,6 +5,7 @@ import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
 import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
+import { FOODS, DEFAULT_FOOD, type FoodId } from '@/lib/cards/food'
 import { CatCard } from '@/components/card/CatCard'
 
 type Status = 'idle' | 'processing' | 'done' | 'error'
@@ -14,6 +15,7 @@ export function Capture() {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const [foodId, setFoodId] = useState<FoodId>(DEFAULT_FOOD)
   const [status, setStatus] = useState<Status>('idle')
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
@@ -53,7 +55,14 @@ export function Capture() {
 
       const context = buildContext()
       const seed = `${file.name}-${file.size}-${file.lastModified}`
-      const res = generateCard({ seed, photoUrl, cutoutUrl: cut, context, firstDiscovery: true })
+      const res = generateCard({
+        seed,
+        photoUrl,
+        cutoutUrl: cut,
+        context,
+        firstDiscovery: true,
+        foodId,
+      })
       setResult(res)
       setStatus('done')
     } catch (err) {
@@ -88,6 +97,29 @@ export function Capture() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-5 px-5 py-8">
       <h1 className="text-xl font-semibold text-stone-800">니냥내냥 · 캐치 PoC</h1>
+
+      <div className="w-full">
+        <p className="mb-1.5 text-center text-xs text-stone-500">
+          먹이 선택 — 비쌀수록 예쁜 카드 확률↑
+        </p>
+        <div className="flex w-full gap-1">
+          {FOODS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFoodId(f.id)}
+              className={`flex flex-1 flex-col items-center rounded-xl border px-1 py-2 active:scale-95 ${
+                foodId === f.id
+                  ? 'border-amber-500 bg-amber-50 text-amber-700'
+                  : 'border-stone-200 text-stone-500'
+              }`}
+            >
+              <span className="text-lg">{f.emoji}</span>
+              <span className="mt-0.5 text-[10px] font-medium leading-tight">{f.label}</span>
+              <span className="text-[9px] text-stone-400">{f.bonus > 0 ? `+${f.bonus}` : '기본'}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
       <button

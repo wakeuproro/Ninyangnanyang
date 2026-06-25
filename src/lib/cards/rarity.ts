@@ -14,7 +14,7 @@ export interface RarityResult {
 export function computeRarity(
   stats: Stats,
   ctx: CaptureContext,
-  opts: { firstDiscovery?: boolean } = {},
+  opts: { firstDiscovery?: boolean; foodBonus?: number; foodLabel?: string } = {},
 ): RarityResult {
   const reasons: string[] = []
   let score = stats.cuteness + stats.chonky + stats.friendliness + stats.charisma
@@ -30,6 +30,7 @@ export function computeRarity(
   if (ctx.weather === 'snow') bonus('눈 오는 날', 6)
   if (ctx.weather === 'fog') bonus('안개', 2)
   if (opts.firstDiscovery) bonus('최초 발견', 6)
+  if (opts.foodBonus) bonus(opts.foodLabel ? `먹이(${opts.foodLabel})` : '먹이', opts.foodBonus)
 
   const rarity: Rarity =
     score >= 46 ? 'legendary'
