@@ -44,6 +44,7 @@ export function generateCard(input: GenerateInput): GenerateResult {
 
   const card: NewCatCard = {
     name: input.name ?? generateName(seed, rarity),
+    kind: 'ninyang', // 기본 니냥(랜덤이름). 저장 시 내냥으로 덮어쓸 수 있음.
     animalType: 'cat',
     photoUrl: input.photoUrl,
     cutoutUrl: input.cutoutUrl ?? null,

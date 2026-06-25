@@ -7,6 +7,7 @@ import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
 import { FOODS, DEFAULT_FOOD, type FoodId } from '@/lib/cards/food'
 import { CatCard } from '@/components/card/CatCard'
+import type { CatKind } from '@/types'
 
 type Status = 'idle' | 'processing' | 'done' | 'error'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -24,6 +25,11 @@ export function Capture() {
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [cutoutBlob, setCutoutBlob] = useState<Blob | null>(null)
+
+  // 니냥/내냥 분류
+  const [kind, setKind] = useState<CatKind | null>(null)
+  const [nameInput, setNameInput] = useState('')
+
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [savedDexNo, setSavedDexNo] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -40,6 +46,8 @@ export function Capture() {
     setResult(null)
     setQuality(null)
     setCutoutUrl(null)
+    setKind(null)
+    setNameInput('')
     setSaveStatus('idle')
     setSavedDexNo(null)
     setSaveError(null)
@@ -69,20 +77,16 @@ export function Capture() {
       setError(err instanceof Error ? err.message : '알 수 없는 오류')
       setStatus('error')
     }
-    // 같은 파일 다시 선택 가능하도록 초기화
     e.target.value = ''
   }
 
-  async function onSave() {
+  async function save(chosenKind: CatKind, name: string) {
     if (!result || !photoFile || !cutoutBlob) return
     setSaveStatus('saving')
     setSaveError(null)
     try {
-      const saved = await saveCatchedCard({
-        card: result.card,
-        photoBlob: photoFile,
-        cutoutBlob,
-      })
+      const card = { ...result.card, kind: chosenKind, name }
+      const saved = await saveCatchedCard({ card, photoBlob: photoFile, cutoutBlob })
       setSavedDexNo(saved.dexNo)
       setSaveStatus('saved')
       queryClient.invalidateQueries({ queryKey: ['my-cards'] })
@@ -93,15 +97,14 @@ export function Capture() {
   }
 
   const lowQuality = quality !== null && !quality.ok
+  const randomName = result?.card.name ?? '냥이'
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-5 px-5 py-8">
       <h1 className="text-xl font-semibold text-stone-800">니냥내냥 · 캐치 PoC</h1>
 
       <div className="w-full">
-        <p className="mb-1.5 text-center text-xs text-stone-500">
-          먹이 선택 — 비쌀수록 예쁜 카드 확률↑
-        </p>
+        <p className="mb-1.5 text-center text-xs text-stone-500">먹이 선택 — 비쌀수록 예쁜 카드 확률↑</p>
         <div className="flex w-full gap-1">
           {FOODS.map((f) => (
             <button
@@ -130,9 +133,7 @@ export function Capture() {
         고양이 사진 고르기
       </button>
 
-      {status === 'processing' && (
-        <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱</p>
-      )}
+      {status === 'processing' && <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱</p>}
       {status === 'error' && <p className="text-sm text-red-500">에러: {error}</p>}
 
       {status === 'done' && result && cutoutUrl && (
@@ -142,9 +143,7 @@ export function Capture() {
           {lowQuality && saveStatus !== 'saved' && (
             <div className="w-full rounded-xl border border-amber-300 bg-amber-50 p-3">
               <p className="text-sm font-medium text-amber-800">
-                <span className="material-symbols-outlined mr-1 align-[-5px] text-[18px]">
-                  warning
-                </span>
+                <span className="material-symbols-outlined mr-1 align-[-5px] text-[18px]">warning</span>
                 누끼가 깔끔하지 않아요
               </p>
               <p className="mt-1 text-xs text-amber-700">
@@ -154,30 +153,73 @@ export function Capture() {
                 onClick={pickFile}
                 className="mt-2 rounded-full bg-amber-600 px-4 py-2 text-xs font-medium text-white active:scale-95"
               >
-                <span className="material-symbols-outlined mr-1 align-[-4px] text-[16px]">
-                  refresh
-                </span>
+                <span className="material-symbols-outlined mr-1 align-[-4px] text-[16px]">refresh</span>
                 다시 찍기
               </button>
             </div>
           )}
 
+          {/* 분류: 니냥 / 내냥 */}
           {saveStatus === 'saved' && savedDexNo !== null ? (
             <p className="text-sm font-medium text-emerald-600">
-              #{String(savedDexNo).padStart(6, '0')} 번으로 도감에 저장됐어요! 📖
+              #{String(savedDexNo).padStart(6, '0')} {kind === 'naenyang' ? '내냥' : '니냥'} 도감에
+              저장됐어요! 📖
             </p>
+          ) : kind === null ? (
+            <div className="w-full">
+              <p className="mb-2 text-center text-sm text-stone-600">이 냥이는?</p>
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => save('ninyang', randomName)}
+                  disabled={saveStatus === 'saving'}
+                  className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 border-amber-400 bg-amber-50 py-4 active:scale-95 disabled:opacity-50"
+                >
+                  <span className="text-2xl">🐱</span>
+                  <span className="text-base font-semibold text-amber-700">니냥</span>
+                  <span className="text-[11px] text-amber-600">길에서 만난 냥 · 랜덤 이름</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setKind('naenyang')
+                    setNameInput('')
+                  }}
+                  disabled={saveStatus === 'saving'}
+                  className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 border-pink-400 bg-pink-50 py-4 active:scale-95 disabled:opacity-50"
+                >
+                  <span className="text-2xl">🏠</span>
+                  <span className="text-base font-semibold text-pink-700">내냥</span>
+                  <span className="text-[11px] text-pink-600">내 반려묘 · 이름 직접</span>
+                </button>
+              </div>
+            </div>
           ) : (
-            <button
-              onClick={onSave}
-              disabled={saveStatus === 'saving'}
-              className="rounded-full bg-stone-900 px-5 py-2.5 text-sm font-medium text-white active:scale-95 disabled:opacity-50"
-            >
-              {saveStatus === 'saving'
-                ? '저장 중…'
-                : lowQuality
-                  ? '그래도 이대로 넣기'
-                  : '📖 도감에 넣기'}
-            </button>
+            // 내냥: 이름 입력
+            <div className="w-full rounded-2xl border-2 border-pink-300 bg-pink-50 p-4">
+              <p className="mb-2 text-sm font-medium text-pink-700">🏠 우리 냥이 이름은?</p>
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder={`예: ${randomName}`}
+                maxLength={20}
+                className="w-full rounded-xl border border-pink-300 bg-white px-3 py-2 text-sm outline-none focus:border-pink-500"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => setKind(null)}
+                  className="rounded-full border border-stone-300 px-4 py-2 text-xs text-stone-500 active:scale-95"
+                >
+                  뒤로
+                </button>
+                <button
+                  onClick={() => save('naenyang', nameInput.trim() || randomName)}
+                  disabled={saveStatus === 'saving'}
+                  className="flex-1 rounded-full bg-pink-500 px-4 py-2 text-sm font-medium text-white active:scale-95 disabled:opacity-50"
+                >
+                  {saveStatus === 'saving' ? '저장 중…' : '이 이름으로 내냥 도감에 넣기'}
+                </button>
+              </div>
+            </div>
           )}
           {saveStatus === 'error' && <p className="text-sm text-red-500">저장 실패: {saveError}</p>}
 

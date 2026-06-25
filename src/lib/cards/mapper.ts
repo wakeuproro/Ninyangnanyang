@@ -1,6 +1,7 @@
 import type {
   AnimalType,
   CatCard,
+  CatKind,
   NewCatCard,
   Rarity,
   Stats,
@@ -14,6 +15,7 @@ export interface CatCardRow {
   owner_id: string
   dex_no: number
   name: string | null
+  kind: CatKind
   animal_type: AnimalType
   photo_url: string
   cutout_url: string | null
@@ -49,6 +51,7 @@ export function toInsertRow(
   return {
     owner_id: ownerId,
     name: card.name,
+    kind: card.kind,
     animal_type: card.animalType,
     photo_url: photoUrl,
     cutout_url: cutoutUrl,
@@ -73,6 +76,7 @@ export function fromRow(row: CatCardRow): CatCard {
     ownerId: row.owner_id,
     dexNo: row.dex_no,
     name: row.name,
+    kind: row.kind,
     animalType: row.animal_type,
     photoUrl: row.photo_url,
     cutoutUrl: row.cutout_url,

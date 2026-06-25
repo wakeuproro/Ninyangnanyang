@@ -1,6 +1,8 @@
 // DB(0001_init.sql)와 1:1 일치하는 앱 타입. 서비스 레이어에서 snake_case ↔ camelCase 매핑.
 
 export type AnimalType = 'cat' | 'dog' | 'other'
+/** 니냥(길에서 발견, 랜덤이름) / 내냥(내 반려묘, 직접 작명) */
+export type CatKind = 'ninyang' | 'naenyang'
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
 export type TimeOfDay = 'dawn' | 'day' | 'sunset' | 'night'
 export type Weather = 'clear' | 'cloudy' | 'rain' | 'snow' | 'fog'
@@ -27,6 +29,7 @@ export interface CaptureContext {
 /** DB INSERT 직전의 카드 (서버 관리 필드 제외) */
 export interface NewCatCard {
   name: string | null
+  kind: CatKind
   animalType: AnimalType
   photoUrl: string
   cutoutUrl: string | null
