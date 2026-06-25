@@ -10,6 +10,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        // 누끼(@imgly) 모델 wasm은 거대(수십MB) → 프리캐시 제외, 런타임 로드
+        globIgnores: ['**/*.wasm', '**/ort-*', '**/onnx*'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+      },
       manifest: {
         name: '니냥내냥',
         short_name: '니냥내냥',
