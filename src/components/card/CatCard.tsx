@@ -20,7 +20,7 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
       <img
         src={cutoutUrl}
         alt={card.name ?? '고양이 카드'}
-        className="absolute bottom-2 left-1/2 max-h-[78%] max-w-[92%] -translate-x-1/2 object-contain drop-shadow-lg"
+        className="absolute left-1/2 top-[46%] max-h-[82%] max-w-[94%] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.35)]"
       />
       <span className="absolute left-2.5 top-2.5">
         <RarityBadge rarity={card.rarity} />

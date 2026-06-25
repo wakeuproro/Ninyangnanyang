@@ -4,6 +4,7 @@ import { computeStats } from './stats'
 import { computeRarity } from './rarity'
 import { resolveTribe, type Tribe } from './tribe'
 import { makeAbility } from './ability'
+import { generateName } from './name'
 
 export interface GenerateInput {
   /** 재현용 시드 (예: 사진 파일 해시 또는 캡처 uuid) */
@@ -37,7 +38,7 @@ export function generateCard(input: GenerateInput): GenerateResult {
   const abilityText = makeAbility(tribe, rarity, context)
 
   const card: NewCatCard = {
-    name: input.name ?? null,
+    name: input.name ?? generateName(seed, rarity),
     animalType: 'cat',
     photoUrl: input.photoUrl,
     cutoutUrl: input.cutoutUrl ?? null,

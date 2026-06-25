@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { cutout } from '@/lib/capture/cutout'
+import { trimTransparent } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
 import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { CatCard } from '@/components/card/CatCard'
@@ -22,7 +23,8 @@ export function Capture() {
     try {
       const photoUrl = URL.createObjectURL(file)
       const blob = await cutout(file)
-      const cut = URL.createObjectURL(blob)
+      const trimmed = await trimTransparent(blob)
+      const cut = URL.createObjectURL(trimmed)
       setCutoutUrl(cut)
 
       const context = buildContext()
