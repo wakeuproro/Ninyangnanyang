@@ -1,7 +1,7 @@
-import { useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cutout } from '@/lib/capture/cutout'
-import { trimTransparent } from '@/lib/capture/trim'
+import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
 import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
@@ -12,9 +12,12 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export function Capture() {
   const queryClient = useQueryClient()
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const [status, setStatus] = useState<Status>('idle')
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
+  const [quality, setQuality] = useState<CutoutQuality | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -23,22 +26,28 @@ export function Capture() {
   const [savedDexNo, setSavedDexNo] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  function pickFile() {
+    inputRef.current?.click()
+  }
+
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setStatus('processing')
     setError(null)
     setResult(null)
+    setQuality(null)
     setCutoutUrl(null)
     setSaveStatus('idle')
     setSavedDexNo(null)
     setSaveError(null)
     try {
       const photoUrl = URL.createObjectURL(file)
-      const blob = await cutout(file)
-      const trimmed = await trimTransparent(blob)
+      const removed = await cutout(file)
+      const { blob: trimmed, quality: q } = await trimAndAssess(removed)
       setPhotoFile(file)
       setCutoutBlob(trimmed)
+      setQuality(q)
       const cut = URL.createObjectURL(trimmed)
       setCutoutUrl(cut)
 
@@ -51,6 +60,8 @@ export function Capture() {
       setError(err instanceof Error ? err.message : '알 수 없는 오류')
       setStatus('error')
     }
+    // 같은 파일 다시 선택 가능하도록 초기화
+    e.target.value = ''
   }
 
   async function onSave() {
@@ -72,15 +83,20 @@ export function Capture() {
     }
   }
 
+  const lowQuality = quality !== null && !quality.ok
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-5 px-5 py-8">
       <h1 className="text-xl font-semibold text-stone-800">니냥내냥 · 캐치 PoC</h1>
 
-      <label className="cursor-pointer rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95">
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+      <button
+        onClick={pickFile}
+        className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
+      >
         <span className="material-symbols-outlined mr-1 align-[-5px] text-[18px]">photo_camera</span>
         고양이 사진 고르기
-        <input type="file" accept="image/*" className="hidden" onChange={onFile} />
-      </label>
+      </button>
 
       {status === 'processing' && (
         <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱</p>
@@ -90,6 +106,29 @@ export function Capture() {
       {status === 'done' && result && cutoutUrl && (
         <>
           <CatCard card={result.card} cutoutUrl={cutoutUrl} />
+
+          {lowQuality && saveStatus !== 'saved' && (
+            <div className="w-full rounded-xl border border-amber-300 bg-amber-50 p-3">
+              <p className="text-sm font-medium text-amber-800">
+                <span className="material-symbols-outlined mr-1 align-[-5px] text-[18px]">
+                  warning
+                </span>
+                누끼가 깔끔하지 않아요
+              </p>
+              <p className="mt-1 text-xs text-amber-700">
+                {quality?.message} 대비되는 배경에서 전신을 크게 다시 찍으면 좋아요.
+              </p>
+              <button
+                onClick={pickFile}
+                className="mt-2 rounded-full bg-amber-600 px-4 py-2 text-xs font-medium text-white active:scale-95"
+              >
+                <span className="material-symbols-outlined mr-1 align-[-4px] text-[16px]">
+                  refresh
+                </span>
+                다시 찍기
+              </button>
+            </div>
+          )}
 
           {saveStatus === 'saved' && savedDexNo !== null ? (
             <p className="text-sm font-medium text-emerald-600">
@@ -101,7 +140,11 @@ export function Capture() {
               disabled={saveStatus === 'saving'}
               className="rounded-full bg-stone-900 px-5 py-2.5 text-sm font-medium text-white active:scale-95 disabled:opacity-50"
             >
-              {saveStatus === 'saving' ? '저장 중…' : '📖 도감에 넣기'}
+              {saveStatus === 'saving'
+                ? '저장 중…'
+                : lowQuality
+                  ? '그래도 이대로 넣기'
+                  : '📖 도감에 넣기'}
             </button>
           )}
           {saveStatus === 'error' && <p className="text-sm text-red-500">저장 실패: {saveError}</p>}
