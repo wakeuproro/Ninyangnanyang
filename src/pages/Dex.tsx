@@ -2,10 +2,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listMyCards } from '@/lib/cards/card.service'
 import { DexCell } from '@/components/dex/DexCell'
-import type { CatKind } from '@/types'
+import { CatCard } from '@/components/card/CatCard'
+import { CardBack } from '@/components/card/CardBack'
+import { FlipCard } from '@/components/card/FlipCard'
+import type { CatCard as Card, CatKind } from '@/types'
 
 export function Dex() {
   const [kind, setKind] = useState<CatKind>('ninyang')
+  const [selected, setSelected] = useState<Card | null>(null)
   const { data, isLoading, error } = useQuery({
     queryKey: ['my-cards'],
     queryFn: listMyCards,
@@ -57,8 +61,25 @@ export function Dex() {
       {shown.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
           {shown.map((card) => (
-            <DexCell key={card.id} card={card} />
+            <DexCell key={card.id} card={card} onClick={() => setSelected(card)} />
           ))}
+        </div>
+      )}
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-black/65 p-6"
+          onClick={() => setSelected(null)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <FlipCard
+              front={<CatCard card={selected} cutoutUrl={selected.cutoutUrl ?? ''} />}
+              back={<CardBack card={selected} />}
+            />
+          </div>
+          <p className="mt-3 text-center text-[11px] text-white/70">
+            카드를 탭하면 뒤집기 · 바깥을 탭하면 닫기
+          </p>
         </div>
       )}
     </div>

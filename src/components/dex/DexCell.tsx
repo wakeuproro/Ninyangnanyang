@@ -4,11 +4,12 @@ import { popartStyle } from '@/lib/backgrounds/popart'
 import { cutoutFeather } from '@/components/card/cutoutFeather'
 import { RarityBadge } from '@/components/card/RarityBadge'
 
-export function DexCell({ card }: { card: CatCard }) {
+export function DexCell({ card, onClick }: { card: CatCard; onClick?: () => void }) {
   const theme = (card.bgTheme ?? 'alley') as BgTheme
   return (
-    <div
-      className="relative overflow-hidden rounded-xl border border-stone-800"
+    <button
+      onClick={onClick}
+      className="relative block overflow-hidden rounded-xl border border-stone-800 text-left active:scale-95"
       style={{ aspectRatio: '3 / 4' }}
     >
       <div className="absolute inset-0" style={popartStyle(theme)} />
@@ -29,6 +30,6 @@ export function DexCell({ card }: { card: CatCard }) {
           #{String(card.dexNo).padStart(6, '0')}
         </p>
       </div>
-    </div>
+    </button>
   )
 }
