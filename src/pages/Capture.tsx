@@ -10,6 +10,8 @@ import { CatCard } from '@/components/card/CatCard'
 import { CardBack } from '@/components/card/CardBack'
 import { FlipCard } from '@/components/card/FlipCard'
 import { CameraView } from '@/components/capture/CameraView'
+import { CatFoundReveal } from '@/components/capture/CatFoundReveal'
+import { rewardFor } from '@/lib/cards/reward'
 import type { CatKind } from '@/types'
 
 type Phase = 'camera' | 'processing' | 'done' | 'error'
@@ -222,13 +224,16 @@ export function Capture() {
 
       {phase === 'done' && result && cutoutUrl && (
         <>
-          <p className="text-sm font-bold tracking-wide text-amber-600">★ 냥이 발견! ★</p>
-          <div className="animate-nyang-reveal">
+          <CatFoundReveal
+            rarity={result.card.rarity}
+            name={result.card.name ?? '냥이'}
+            reward={rewardFor(result.card.rarity)}
+          >
             <FlipCard
               front={<CatCard card={result.card} cutoutUrl={cutoutUrl} />}
               back={<CardBack card={result.card} />}
             />
-          </div>
+          </CatFoundReveal>
           <p className="-mt-1 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
 
           {lowQuality && saveStatus !== 'saved' && (

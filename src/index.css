@@ -69,3 +69,25 @@ body {
 .animate-nyang-shake { animation: nyang-shake 0.5s ease-in-out; }
 .animate-nyang-particle { animation: nyang-particle 0.5s ease-out forwards; }
 .animate-nyang-reveal { animation: nyang-reveal 0.5s ease-out; }
+
+@keyframes nyang-confetti {
+  0% { transform: translateY(-10px) rotate(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(450px) rotate(420deg); opacity: 0; }
+}
+@keyframes nyang-aura {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+@keyframes nyang-banner {
+  0% { transform: scale(0.6) translateY(8px); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.animate-nyang-confetti {
+  animation-name: nyang-confetti;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.animate-nyang-aura { animation: nyang-aura 1.8s ease-in-out infinite; }
+.animate-nyang-banner { animation: nyang-banner 0.5s ease-out; }
