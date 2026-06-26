@@ -12,7 +12,9 @@ import { FlipCard } from '@/components/card/FlipCard'
 import { CameraView } from '@/components/capture/CameraView'
 import { CatFoundReveal } from '@/components/capture/CatFoundReveal'
 import { rewardFor } from '@/lib/cards/reward'
-import type { CatKind } from '@/types'
+import { makeAbility } from '@/lib/cards/ability'
+import { PICKABLE_TRIBES, TRIBE_COLOR, TRIBE_LABEL, type Tribe } from '@/lib/cards/tribe'
+import type { CaptureContext, CatKind } from '@/types'
 
 type Phase = 'camera' | 'processing' | 'done' | 'error'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -34,6 +36,8 @@ export function Capture() {
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
   const [cutoutBlob, setCutoutBlob] = useState<Blob | null>(null)
 
+  const [ctx, setCtx] = useState<CaptureContext | null>(null)
+  const [selectedTribe, setSelectedTribe] = useState<Tribe>('unknown')
   const [kind, setKind] = useState<CatKind | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -56,6 +60,8 @@ export function Capture() {
         setCutoutUrl(cut)
 
         const context = buildContext()
+        setCtx(context)
+        setSelectedTribe('unknown')
         const seed = `cam-${blob.size}-${Math.floor(performance.now())}`
         const res = generateCard({
           seed,
@@ -103,6 +109,15 @@ export function Capture() {
     }
   }
 
+  function pickTribe(t: Tribe) {
+    setSelectedTribe(t)
+    setResult((prev) =>
+      prev && ctx
+        ? { ...prev, card: { ...prev.card, tribe: t, abilityText: makeAbility(t, prev.card.rarity, ctx) } }
+        : prev,
+    )
+  }
+
   function reset() {
     setPhase('camera')
     setCamFallback(false)
@@ -113,6 +128,8 @@ export function Capture() {
     setPhotoUrl(null)
     setPhotoBlob(null)
     setCutoutBlob(null)
+    setCtx(null)
+    setSelectedTribe('unknown')
     setKind(null)
     setNameInput('')
     setSaveStatus('idle')
@@ -235,6 +252,31 @@ export function Capture() {
             />
           </CatFoundReveal>
           <p className="-mt-1 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
+
+          {saveStatus !== 'saved' && (
+            <div className="w-full">
+              <p className="mb-1.5 text-center text-xs text-stone-500">털색 타입 고르기 (선택)</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {PICKABLE_TRIBES.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => pickTribe(t)}
+                    className={`flex items-center justify-center gap-1 rounded-xl border py-2 text-[11px] active:scale-95 ${
+                      selectedTribe === t
+                        ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : 'border-stone-200 text-stone-500'
+                    }`}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full border border-black/10"
+                      style={{ background: TRIBE_COLOR[t] }}
+                    />
+                    {TRIBE_LABEL[t]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {lowQuality && saveStatus !== 'saved' && (
             <div className="w-full rounded-xl border border-amber-300 bg-amber-50 p-3">
