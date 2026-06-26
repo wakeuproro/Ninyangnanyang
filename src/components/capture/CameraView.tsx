@@ -109,14 +109,31 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
             style={{ animationDelay: '0.42s' }}
           />
           <div
-            className="animate-nyang-pop absolute left-1/2 top-1/2 text-4xl font-black italic text-white opacity-0"
-            style={{
-              animationDelay: '0.42s',
-              textShadow: '0 0 2px #f59e0b, 0 3px 10px rgba(0,0,0,.55)',
-              WebkitTextStroke: '1px rgba(0,0,0,.25)',
-            }}
+            className="animate-nyang-pop absolute left-1/2 top-1/2 flex items-center justify-center opacity-0"
+            style={{ animationDelay: '0.42s', width: 170, height: 170 }}
           >
-            GOTCHA!
+            <div
+              className="absolute inset-0"
+              style={{
+                background: '#ffd23f',
+                clipPath:
+                  'polygon(50% 0%, 58% 18%, 79% 9%, 73% 31%, 95% 31%, 78% 47%, 95% 63%, 73% 63%, 79% 85%, 58% 76%, 50% 100%, 42% 76%, 21% 85%, 27% 63%, 5% 63%, 22% 47%, 5% 31%, 27% 31%, 21% 9%, 42% 18%)',
+              }}
+            />
+            <div
+              className="absolute inset-[14px]"
+              style={{
+                background: '#ff5a5f',
+                clipPath:
+                  'polygon(50% 0%, 58% 18%, 79% 9%, 73% 31%, 95% 31%, 78% 47%, 95% 63%, 73% 63%, 79% 85%, 58% 76%, 50% 100%, 42% 76%, 21% 85%, 27% 63%, 5% 63%, 22% 47%, 5% 31%, 27% 31%, 21% 9%, 42% 18%)',
+              }}
+            />
+            <span
+              className="relative text-2xl font-black italic text-white"
+              style={{ WebkitTextStroke: '1.5px #1f1f1f', textShadow: '2px 2px 0 #1f1f1f' }}
+            >
+              GOTCHA!
+            </span>
           </div>
           {PARTICLES.map((p, i) => (
             <span
