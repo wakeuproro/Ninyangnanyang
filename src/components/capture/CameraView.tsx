@@ -9,12 +9,13 @@ interface CameraViewProps {
   onError: (msg: string) => void
 }
 
-const PARTICLES = Array.from({ length: 12 }, (_, i) => {
-  const angle = (i / 12) * Math.PI * 2
+const PARTICLES = Array.from({ length: 14 }, (_, i) => {
+  const angle = (i / 14) * Math.PI * 2
+  const dist = 110 + (i % 3) * 18
   return {
-    tx: Math.round(Math.cos(angle) * 95),
-    ty: Math.round(Math.sin(angle) * 95),
-    emoji: ['⭐', '✨', '💛', '🐾'][i % 4],
+    tx: Math.round(Math.cos(angle) * dist),
+    ty: Math.round(Math.sin(angle) * dist),
+    emoji: ['⭐', '✨', '💛', '🐾', '💥'][i % 5],
   }
 })
 
@@ -54,7 +55,7 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
       setSnapshot(URL.createObjectURL(blob))
       setPhase('throwing')
       stopStream(streamRef.current) // 프레임 정지
-      window.setTimeout(() => onCapture(blob), 1150)
+      window.setTimeout(() => onCapture(blob), 1050)
     } catch (e) {
       onError(e instanceof Error ? e.message : '캡처 실패')
     }
@@ -62,8 +63,10 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
 
   return (
     <div
-      className="relative w-[260px] overflow-hidden rounded-[28px] border-4 border-amber-300 bg-stone-900 shadow-xl"
-      style={{ aspectRatio: '3 / 4' }}
+      className={`relative w-[260px] overflow-hidden rounded-[28px] border-4 border-amber-300 bg-stone-900 shadow-xl ${
+        phase === 'throwing' ? 'animate-nyang-frameshake' : ''
+      }`}
+      style={{ aspectRatio: '3 / 4', animationDelay: phase === 'throwing' ? '0.42s' : undefined }}
     >
       {snapshot ? (
         <img src={snapshot} alt="captured" className="absolute inset-0 h-full w-full object-cover" />
@@ -98,17 +101,25 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
       {/* 던지기 애니메이션 */}
       {phase === 'throwing' && (
         <>
-          <div className="animate-nyang-throw absolute bottom-0 left-1/2 text-4xl">{foodEmoji}</div>
+          <div className="animate-nyang-throw absolute bottom-0 left-1/2 text-5xl drop-shadow-lg">
+            {foodEmoji}
+          </div>
           <div
-            className="animate-nyang-flash absolute left-1/2 top-1/2 h-20 w-20 rounded-full bg-white opacity-0"
-            style={{ animationDelay: '0.6s' }}
+            className="animate-nyang-flash absolute left-1/2 top-1/2 h-28 w-28 rounded-full bg-white opacity-0"
+            style={{ animationDelay: '0.42s' }}
           />
+          <div
+            className="animate-nyang-pop absolute left-1/2 top-1/2 text-3xl font-black text-white opacity-0"
+            style={{ animationDelay: '0.42s', textShadow: '0 2px 8px rgba(0,0,0,.5)' }}
+          >
+            펑!
+          </div>
           {PARTICLES.map((p, i) => (
             <span
               key={i}
               className="animate-nyang-particle absolute left-1/2 top-1/2 text-xl opacity-0"
               style={
-                { ['--tx']: `${p.tx}px`, ['--ty']: `${p.ty}px`, animationDelay: '0.6s' } as CSSProperties
+                { ['--tx']: `${p.tx}px`, ['--ty']: `${p.ty}px`, animationDelay: '0.42s' } as CSSProperties
               }
             >
               {p.emoji}

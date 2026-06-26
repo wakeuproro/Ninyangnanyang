@@ -3,8 +3,8 @@ import { removeBackground, type Config } from '@imgly/background-removal'
 // 브라우저에서 배경 제거(누끼). 첫 호출 시 모델 에셋을 받아오므로 다소 느릴 수 있음.
 // 만약 에셋 404가 나면 publicPath 를 CDN으로 지정: { publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1/dist/' }
 const config: Config = {
-  model: 'isnet', // 최고 정밀 모델 (저대비 흰 고양이 등에서 누끼 품질↑, 대신 느림)
-  device: 'gpu', // GPU 가속 (미지원 시 자동 cpu 폴백)
+  model: 'isnet', // 최고 정밀 모델 (저대비 흰 고양이 등 누끼 품질↑)
+  // device 미지정 → 환경 자동 선택. (폰엔 WebGPU 없어서 'gpu' 강제 시 에러남)
   output: { format: 'image/png', quality: 1 },
 }
 

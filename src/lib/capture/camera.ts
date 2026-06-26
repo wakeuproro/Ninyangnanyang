@@ -14,10 +14,14 @@ export async function startCamera(): Promise<MediaStream> {
   })
 }
 
-/** 현재 영상 프레임을 JPEG Blob 으로 캡처 */
+/** 현재 영상 프레임을 JPEG Blob 으로 캡처 (폰 메모리 위해 긴변 1024로 축소) */
 export async function captureFrame(video: HTMLVideoElement): Promise<Blob> {
-  const w = video.videoWidth || 720
-  const h = video.videoHeight || 960
+  const vw = video.videoWidth || 720
+  const vh = video.videoHeight || 960
+  const maxSide = 1024
+  const scale = Math.min(1, maxSide / Math.max(vw, vh))
+  const w = Math.round(vw * scale)
+  const h = Math.round(vh * scale)
   const canvas = document.createElement('canvas')
   canvas.width = w
   canvas.height = h

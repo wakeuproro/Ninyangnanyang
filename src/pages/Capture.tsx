@@ -25,6 +25,7 @@ export function Capture() {
   const [camFallback, setCamFallback] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
   const [quality, setQuality] = useState<CutoutQuality | null>(null)
@@ -39,12 +40,14 @@ export function Capture() {
 
   const process = useCallback(
     async (blob: Blob) => {
+      const pUrl = URL.createObjectURL(blob)
+      setPhotoUrl(pUrl)
+      setPhotoBlob(blob)
       setPhase('processing')
       setError(null)
       try {
         const removed = await cutout(blob)
         const { blob: trimmed, quality: q } = await trimAndAssess(removed)
-        setPhotoBlob(blob)
         setCutoutBlob(trimmed)
         setQuality(q)
         const cut = URL.createObjectURL(trimmed)
@@ -54,7 +57,7 @@ export function Capture() {
         const seed = `cam-${blob.size}-${Math.floor(performance.now())}`
         const res = generateCard({
           seed,
-          photoUrl: URL.createObjectURL(blob),
+          photoUrl: pUrl,
           cutoutUrl: cut,
           context,
           firstDiscovery: true,
@@ -63,6 +66,7 @@ export function Capture() {
         setResult(res)
         setPhase('done')
       } catch (err) {
+        console.error('[capture] 누끼/생성 실패:', err)
         setError(err instanceof Error ? err.message : '알 수 없는 오류')
         setPhase('error')
       }
@@ -104,6 +108,7 @@ export function Capture() {
     setResult(null)
     setQuality(null)
     setCutoutUrl(null)
+    setPhotoUrl(null)
     setPhotoBlob(null)
     setCutoutBlob(null)
     setKind(null)
@@ -182,13 +187,35 @@ export function Capture() {
       )}
 
       {phase === 'processing' && (
-        <p className="py-10 text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱✨</p>
+        <div className="flex flex-col items-center gap-3 py-4">
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="잡은 사진"
+              className="w-[200px] rounded-2xl border-2 border-amber-300 object-cover opacity-80"
+              style={{ aspectRatio: '3 / 4' }}
+            />
+          )}
+          <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱✨</p>
+        </div>
       )}
       {phase === 'error' && (
-        <div className="flex flex-col items-center gap-3 py-8">
-          <p className="text-sm text-red-500">에러: {error}</p>
-          <button onClick={reset} className="rounded-full bg-stone-900 px-5 py-2 text-sm text-white">
-            다시
+        <div className="flex flex-col items-center gap-3 py-4">
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="잡은 사진"
+              className="w-[200px] rounded-2xl border-2 border-red-300 object-cover"
+              style={{ aspectRatio: '3 / 4' }}
+            />
+          )}
+          <p className="text-sm font-medium text-red-500">누끼에 실패했어요 😿</p>
+          <p className="max-w-[260px] text-center text-xs text-stone-400">{error}</p>
+          <button
+            onClick={reset}
+            className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
+          >
+            🐱 다시 잡기
           </button>
         </div>
       )}
