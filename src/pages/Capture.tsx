@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useRef, useState, useCallback, type ChangeEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cutout } from '@/lib/capture/cutout'
 import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
@@ -9,90 +9,85 @@ import { FOODS, DEFAULT_FOOD, getFood, type FoodId } from '@/lib/cards/food'
 import { CatCard } from '@/components/card/CatCard'
 import { CardBack } from '@/components/card/CardBack'
 import { FlipCard } from '@/components/card/FlipCard'
-import { CatchAnimation } from '@/components/capture/CatchAnimation'
+import { CameraView } from '@/components/capture/CameraView'
 import type { CatKind } from '@/types'
 
-type Status = 'idle' | 'processing' | 'done' | 'error'
+type Phase = 'camera' | 'processing' | 'done' | 'error'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export function Capture() {
   const queryClient = useQueryClient()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const [foodId, setFoodId] = useState<FoodId>(DEFAULT_FOOD)
-  const [status, setStatus] = useState<Status>('idle')
+  const [sessionId, setSessionId] = useState(0) // CameraView 리마운트용
+  const [phase, setPhase] = useState<Phase>('camera')
+  const [camFallback, setCamFallback] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
   const [result, setResult] = useState<GenerateResult | null>(null)
   const [quality, setQuality] = useState<CutoutQuality | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
   const [cutoutBlob, setCutoutBlob] = useState<Blob | null>(null)
 
-  // 캐치 애니메이션 (던지기 → 펑 → 카드)
-  const [caught, setCaught] = useState(false)
-  // 니냥/내냥 분류
   const [kind, setKind] = useState<CatKind | null>(null)
   const [nameInput, setNameInput] = useState('')
-
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [savedDexNo, setSavedDexNo] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  function pickFile() {
-    inputRef.current?.click()
-  }
+  const process = useCallback(
+    async (blob: Blob) => {
+      setPhase('processing')
+      setError(null)
+      try {
+        const removed = await cutout(blob)
+        const { blob: trimmed, quality: q } = await trimAndAssess(removed)
+        setPhotoBlob(blob)
+        setCutoutBlob(trimmed)
+        setQuality(q)
+        const cut = URL.createObjectURL(trimmed)
+        setCutoutUrl(cut)
 
-  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+        const context = buildContext()
+        const seed = `cam-${blob.size}-${Math.floor(performance.now())}`
+        const res = generateCard({
+          seed,
+          photoUrl: URL.createObjectURL(blob),
+          cutoutUrl: cut,
+          context,
+          firstDiscovery: true,
+          foodId,
+        })
+        setResult(res)
+        setPhase('done')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류')
+        setPhase('error')
+      }
+    },
+    [foodId],
+  )
+
+  const onCamError = useCallback((msg: string) => {
+    setCamFallback(true)
+    setError(msg)
+  }, [])
+
+  function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setStatus('processing')
-    setError(null)
-    setResult(null)
-    setQuality(null)
-    setCutoutUrl(null)
-    setCaught(false)
-    setKind(null)
-    setNameInput('')
-    setSaveStatus('idle')
-    setSavedDexNo(null)
-    setSaveError(null)
-    try {
-      const photoUrl = URL.createObjectURL(file)
-      const removed = await cutout(file)
-      const { blob: trimmed, quality: q } = await trimAndAssess(removed)
-      setPhotoFile(file)
-      setCutoutBlob(trimmed)
-      setQuality(q)
-      const cut = URL.createObjectURL(trimmed)
-      setCutoutUrl(cut)
-
-      const context = buildContext()
-      const seed = `${file.name}-${file.size}-${file.lastModified}`
-      const res = generateCard({
-        seed,
-        photoUrl,
-        cutoutUrl: cut,
-        context,
-        firstDiscovery: true,
-        foodId,
-      })
-      setResult(res)
-      setStatus('done')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류')
-      setStatus('error')
-    }
+    if (file) process(file)
     e.target.value = ''
   }
 
   async function save(chosenKind: CatKind, name: string) {
-    if (!result || !photoFile || !cutoutBlob) return
+    if (!result || !photoBlob || !cutoutBlob) return
     setSaveStatus('saving')
     setSaveError(null)
     try {
       const card = { ...result.card, kind: chosenKind, name }
-      const saved = await saveCatchedCard({ card, photoBlob: photoFile, cutoutBlob })
+      const saved = await saveCatchedCard({ card, photoBlob, cutoutBlob })
       setSavedDexNo(saved.dexNo)
       setSaveStatus('saved')
       queryClient.invalidateQueries({ queryKey: ['my-cards'] })
@@ -102,66 +97,112 @@ export function Capture() {
     }
   }
 
+  function reset() {
+    setPhase('camera')
+    setCamFallback(false)
+    setError(null)
+    setResult(null)
+    setQuality(null)
+    setCutoutUrl(null)
+    setPhotoBlob(null)
+    setCutoutBlob(null)
+    setKind(null)
+    setNameInput('')
+    setSaveStatus('idle')
+    setSavedDexNo(null)
+    setSaveError(null)
+    setSessionId((n) => n + 1)
+  }
+
   const lowQuality = quality !== null && !quality.ok
   const randomName = result?.card.name ?? '냥이'
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-5 px-5 py-8">
-      <h1 className="text-xl font-semibold text-stone-800">니냥내냥 · 캐치 PoC</h1>
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-4 px-5 py-6">
+      <h1 className="text-xl font-semibold text-stone-800">니냥내냥 🐱</h1>
 
-      <div className="w-full">
-        <p className="mb-1.5 text-center text-xs text-stone-500">먹이 선택 — 비쌀수록 예쁜 카드 확률↑</p>
-        <div className="flex w-full gap-1">
-          {FOODS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFoodId(f.id)}
-              className={`flex flex-1 flex-col items-center rounded-xl border px-1 py-2 active:scale-95 ${
-                foodId === f.id
-                  ? 'border-amber-500 bg-amber-50 text-amber-700'
-                  : 'border-stone-200 text-stone-500'
-              }`}
-            >
-              <span className="text-lg">{f.emoji}</span>
-              <span className="mt-0.5 text-[10px] font-medium leading-tight">{f.label}</span>
-              <span className="text-[9px] text-stone-400">{f.bonus > 0 ? `+${f.bonus}` : '기본'}</span>
-            </button>
-          ))}
+      {/* 먹이 선택 (캐치 화면에서만) */}
+      {phase === 'camera' && (
+        <div className="w-full">
+          <p className="mb-1.5 text-center text-xs text-stone-500">
+            먹이 선택 — 비쌀수록 예쁜 카드 확률↑
+          </p>
+          <div className="flex w-full gap-1">
+            {FOODS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFoodId(f.id)}
+                className={`flex flex-1 flex-col items-center rounded-xl border px-1 py-2 active:scale-95 ${
+                  foodId === f.id
+                    ? 'border-amber-500 bg-amber-50 text-amber-700'
+                    : 'border-stone-200 text-stone-500'
+                }`}
+              >
+                <span className="text-lg">{f.emoji}</span>
+                <span className="mt-0.5 text-[10px] font-medium leading-tight">{f.label}</span>
+                <span className="text-[9px] text-stone-400">
+                  {f.bonus > 0 ? `+${f.bonus}` : '기본'}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
-      <button
-        onClick={pickFile}
-        className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
-      >
-        <span className="material-symbols-outlined mr-1 align-[-5px] text-[18px]">photo_camera</span>
-        고양이 사진 고르기
-      </button>
-
-      {status === 'processing' && <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱</p>}
-      {status === 'error' && <p className="text-sm text-red-500">에러: {error}</p>}
-
-      {status === 'done' && result && cutoutUrl && !caught && (
-        <>
-          <CatchAnimation
-            cutoutUrl={cutoutUrl}
-            foodEmoji={getFood(foodId).emoji}
-            onDone={() => setCaught(true)}
-          />
-          <p className="-mt-2 text-[11px] text-stone-400">먹이를 던져 잡아보세요!</p>
-        </>
       )}
 
-      {status === 'done' && result && cutoutUrl && caught && (
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+
+      {/* 라이브 카메라 (또는 폴백) */}
+      {phase === 'camera' && !camFallback && (
         <>
+          <CameraView
+            key={sessionId}
+            foodEmoji={getFood(foodId).emoji}
+            onCapture={process}
+            onError={onCamError}
+          />
+          <button onClick={() => fileRef.current?.click()} className="text-xs text-stone-400 underline">
+            카메라 대신 사진 고르기
+          </button>
+        </>
+      )}
+      {phase === 'camera' && camFallback && (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-stone-200 p-6 text-center">
+          <p className="text-sm text-stone-500">
+            카메라를 열 수 없어요 📷
+            <br />
+            <span className="text-xs text-stone-400">{error}</span>
+          </p>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
+          >
+            사진 고르기
+          </button>
+        </div>
+      )}
+
+      {phase === 'processing' && (
+        <p className="py-10 text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱✨</p>
+      )}
+      {phase === 'error' && (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <p className="text-sm text-red-500">에러: {error}</p>
+          <button onClick={reset} className="rounded-full bg-stone-900 px-5 py-2 text-sm text-white">
+            다시
+          </button>
+        </div>
+      )}
+
+      {phase === 'done' && result && cutoutUrl && (
+        <>
+          <p className="text-sm font-bold tracking-wide text-amber-600">★ 냥이 발견! ★</p>
           <div className="animate-nyang-reveal">
             <FlipCard
               front={<CatCard card={result.card} cutoutUrl={cutoutUrl} />}
               back={<CardBack card={result.card} />}
             />
           </div>
-          <p className="-mt-2 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
+          <p className="-mt-1 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
 
           {lowQuality && saveStatus !== 'saved' && (
             <div className="w-full rounded-xl border border-amber-300 bg-amber-50 p-3">
@@ -173,21 +214,28 @@ export function Capture() {
                 {quality?.message} 대비되는 배경에서 전신을 크게 다시 찍으면 좋아요.
               </p>
               <button
-                onClick={pickFile}
+                onClick={reset}
                 className="mt-2 rounded-full bg-amber-600 px-4 py-2 text-xs font-medium text-white active:scale-95"
               >
                 <span className="material-symbols-outlined mr-1 align-[-4px] text-[16px]">refresh</span>
-                다시 찍기
+                다시 잡기
               </button>
             </div>
           )}
 
-          {/* 분류: 니냥 / 내냥 */}
           {saveStatus === 'saved' && savedDexNo !== null ? (
-            <p className="text-sm font-medium text-emerald-600">
-              #{String(savedDexNo).padStart(6, '0')} {kind === 'naenyang' ? '내냥' : '니냥'} 도감에
-              저장됐어요! 📖
-            </p>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm font-medium text-emerald-600">
+                #{String(savedDexNo).padStart(6, '0')} {kind === 'naenyang' ? '내냥' : '니냥'} 도감에
+                저장됐어요! 📖
+              </p>
+              <button
+                onClick={reset}
+                className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
+              >
+                🐱 또 잡기
+              </button>
+            </div>
           ) : kind === null ? (
             <div className="w-full">
               <p className="mb-2 text-center text-sm text-stone-600">이 냥이는?</p>
@@ -216,7 +264,6 @@ export function Capture() {
               </div>
             </div>
           ) : (
-            // 내냥: 이름 입력
             <div className="w-full rounded-2xl border-2 border-pink-300 bg-pink-50 p-4">
               <p className="mb-2 text-sm font-medium text-pink-700">🏠 우리 냥이 이름은?</p>
               <input
