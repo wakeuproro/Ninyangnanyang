@@ -109,10 +109,14 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
             style={{ animationDelay: '0.42s' }}
           />
           <div
-            className="animate-nyang-pop absolute left-1/2 top-1/2 text-3xl font-black text-white opacity-0"
-            style={{ animationDelay: '0.42s', textShadow: '0 2px 8px rgba(0,0,0,.5)' }}
+            className="animate-nyang-pop absolute left-1/2 top-1/2 text-4xl font-black italic text-white opacity-0"
+            style={{
+              animationDelay: '0.42s',
+              textShadow: '0 0 2px #f59e0b, 0 3px 10px rgba(0,0,0,.55)',
+              WebkitTextStroke: '1px rgba(0,0,0,.25)',
+            }}
           >
-            펑!
+            GOTCHA!
           </div>
           {PARTICLES.map((p, i) => (
             <span
