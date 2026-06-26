@@ -7,6 +7,8 @@ import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
 import { FOODS, DEFAULT_FOOD, type FoodId } from '@/lib/cards/food'
 import { CatCard } from '@/components/card/CatCard'
+import { CardBack } from '@/components/card/CardBack'
+import { FlipCard } from '@/components/card/FlipCard'
 import type { CatKind } from '@/types'
 
 type Status = 'idle' | 'processing' | 'done' | 'error'
@@ -138,7 +140,11 @@ export function Capture() {
 
       {status === 'done' && result && cutoutUrl && (
         <>
-          <CatCard card={result.card} cutoutUrl={cutoutUrl} />
+          <FlipCard
+            front={<CatCard card={result.card} cutoutUrl={cutoutUrl} />}
+            back={<CardBack card={result.card} />}
+          />
+          <p className="-mt-2 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
 
           {lowQuality && saveStatus !== 'saved' && (
             <div className="w-full rounded-xl border border-amber-300 bg-amber-50 p-3">

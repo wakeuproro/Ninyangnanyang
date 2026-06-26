@@ -13,10 +13,7 @@ interface CatCardProps {
 export function CatCard({ card, cutoutUrl }: CatCardProps) {
   const theme = (card.bgTheme ?? 'alley') as BgTheme
   return (
-    <div
-      className="relative w-[240px] overflow-hidden rounded-2xl border-2 border-stone-900 shadow-lg"
-      style={{ aspectRatio: '3 / 4' }}
-    >
+    <div className="relative h-full w-full overflow-hidden rounded-2xl border-2 border-stone-900 shadow-lg">
       <div className="absolute inset-0" style={popartStyle(theme)} />
       <img
         src={cutoutUrl}
