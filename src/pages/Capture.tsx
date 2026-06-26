@@ -1,5 +1,7 @@
-import { useRef, useState, useCallback, type ChangeEvent } from 'react'
+import { useRef, useState, useEffect, useCallback, type ChangeEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useProfile } from '@/hooks/use-profile'
+import { applyCatchRewards } from '@/lib/profile/profile.service'
 import { cutout } from '@/lib/capture/cutout'
 import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
@@ -22,6 +24,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 export function Capture() {
   const queryClient = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const { data: profile } = useProfile()
 
   const [foodId, setFoodId] = useState<FoodId>(DEFAULT_FOOD)
   const [sessionId, setSessionId] = useState(0) // CameraView 리마운트용
@@ -43,6 +46,11 @@ export function Capture() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [savedDexNo, setSavedDexNo] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // 보유 츄르보다 비싼 먹이가 선택돼 있으면 기본으로 되돌림
+  useEffect(() => {
+    if (profile && getFood(foodId).cost > profile.churu) setFoodId(DEFAULT_FOOD)
+  }, [profile, foodId])
 
   const process = useCallback(
     async (blob: Blob) => {
@@ -103,6 +111,18 @@ export function Capture() {
       setSavedDexNo(saved.dexNo)
       setSaveStatus('saved')
       queryClient.invalidateQueries({ queryKey: ['my-cards'] })
+      try {
+        const reward = rewardFor(result.card.rarity)
+        await applyCatchRewards({
+          foodCost: getFood(foodId).cost,
+          xp: reward.xp,
+          coins: reward.coins,
+          churuBack: 2,
+        })
+        queryClient.invalidateQueries({ queryKey: ['profile'] })
+      } catch {
+        // 보상 적립 실패는 저장 성공에 영향 없음
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : '알 수 없는 오류')
       setSaveStatus('error')
@@ -152,23 +172,29 @@ export function Capture() {
             먹이 선택 — 비쌀수록 예쁜 카드 확률↑
           </p>
           <div className="flex w-full gap-1.5">
-            {FOODS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFoodId(f.id)}
-                className={`flex flex-1 flex-col items-center rounded-2xl border-2 px-1 py-3 active:scale-95 ${
-                  foodId === f.id
-                    ? 'border-amber-500 bg-amber-50 text-amber-700'
-                    : 'border-stone-200 text-stone-500'
-                }`}
-              >
-                <span className="text-[26px] leading-none">{f.emoji}</span>
-                <span className="mt-1 text-[11px] font-medium leading-tight">{f.label}</span>
-                <span className="text-[10px] text-stone-400">
-                  {f.bonus > 0 ? `+${f.bonus}` : '기본'}
-                </span>
-              </button>
-            ))}
+            {FOODS.map((f) => {
+              const locked = f.cost > (profile?.churu ?? 0)
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => !locked && setFoodId(f.id)}
+                  disabled={locked}
+                  className={`flex flex-1 flex-col items-center rounded-2xl border-2 px-1 py-3 active:scale-95 ${
+                    locked
+                      ? 'border-stone-100 text-stone-300'
+                      : foodId === f.id
+                        ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : 'border-stone-200 text-stone-500'
+                  }`}
+                >
+                  <span className="text-[26px] leading-none">{locked ? '🔒' : f.emoji}</span>
+                  <span className="mt-1 text-[11px] font-medium leading-tight">{f.label}</span>
+                  <span className="text-[10px] text-stone-400">
+                    {f.cost > 0 ? `🐟${f.cost} · +${f.bonus}` : '기본'}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
