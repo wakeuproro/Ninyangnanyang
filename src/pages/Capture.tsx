@@ -5,10 +5,11 @@ import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
 import { buildContext } from '@/lib/capture/context'
 import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
-import { FOODS, DEFAULT_FOOD, type FoodId } from '@/lib/cards/food'
+import { FOODS, DEFAULT_FOOD, getFood, type FoodId } from '@/lib/cards/food'
 import { CatCard } from '@/components/card/CatCard'
 import { CardBack } from '@/components/card/CardBack'
 import { FlipCard } from '@/components/card/FlipCard'
+import { CatchAnimation } from '@/components/capture/CatchAnimation'
 import type { CatKind } from '@/types'
 
 type Status = 'idle' | 'processing' | 'done' | 'error'
@@ -28,6 +29,8 @@ export function Capture() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [cutoutBlob, setCutoutBlob] = useState<Blob | null>(null)
 
+  // 캐치 애니메이션 (던지기 → 펑 → 카드)
+  const [caught, setCaught] = useState(false)
   // 니냥/내냥 분류
   const [kind, setKind] = useState<CatKind | null>(null)
   const [nameInput, setNameInput] = useState('')
@@ -48,6 +51,7 @@ export function Capture() {
     setResult(null)
     setQuality(null)
     setCutoutUrl(null)
+    setCaught(false)
     setKind(null)
     setNameInput('')
     setSaveStatus('idle')
@@ -138,12 +142,25 @@ export function Capture() {
       {status === 'processing' && <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱</p>}
       {status === 'error' && <p className="text-sm text-red-500">에러: {error}</p>}
 
-      {status === 'done' && result && cutoutUrl && (
+      {status === 'done' && result && cutoutUrl && !caught && (
         <>
-          <FlipCard
-            front={<CatCard card={result.card} cutoutUrl={cutoutUrl} />}
-            back={<CardBack card={result.card} />}
+          <CatchAnimation
+            cutoutUrl={cutoutUrl}
+            foodEmoji={getFood(foodId).emoji}
+            onDone={() => setCaught(true)}
           />
+          <p className="-mt-2 text-[11px] text-stone-400">먹이를 던져 잡아보세요!</p>
+        </>
+      )}
+
+      {status === 'done' && result && cutoutUrl && caught && (
+        <>
+          <div className="animate-nyang-reveal">
+            <FlipCard
+              front={<CatCard card={result.card} cutoutUrl={cutoutUrl} />}
+              back={<CardBack card={result.card} />}
+            />
+          </div>
           <p className="-mt-2 text-[11px] text-stone-400">카드를 탭하면 뒤집혀요 🔄</p>
 
           {lowQuality && saveStatus !== 'saved' && (
