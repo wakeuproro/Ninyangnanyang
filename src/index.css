@@ -27,8 +27,8 @@ body {
 @keyframes nyang-throw {
   0% { transform: translate(-50%, 40px) scale(0.4) rotate(0deg); opacity: 0; }
   15% { opacity: 1; }
-  65% { transform: translate(-50%, -165px) scale(1.6) rotate(560deg); opacity: 1; }
-  100% { transform: translate(-50%, -150px) scale(0.15) rotate(740deg); opacity: 0; }
+  65% { transform: translate(-50%, -240px) scale(1.7) rotate(560deg); opacity: 1; }
+  100% { transform: translate(-50%, -225px) scale(0.15) rotate(740deg); opacity: 0; }
 }
 @keyframes nyang-pop {
   0% { transform: translate(-50%, -50%) scale(0.2) rotate(-15deg); opacity: 0; }

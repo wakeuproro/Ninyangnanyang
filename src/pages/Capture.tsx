@@ -132,20 +132,20 @@ export function Capture() {
           <p className="mb-1.5 text-center text-xs text-stone-500">
             먹이 선택 — 비쌀수록 예쁜 카드 확률↑
           </p>
-          <div className="flex w-full gap-1">
+          <div className="flex w-full gap-1.5">
             {FOODS.map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFoodId(f.id)}
-                className={`flex flex-1 flex-col items-center rounded-xl border px-1 py-2 active:scale-95 ${
+                className={`flex flex-1 flex-col items-center rounded-2xl border-2 px-1 py-3 active:scale-95 ${
                   foodId === f.id
                     ? 'border-amber-500 bg-amber-50 text-amber-700'
                     : 'border-stone-200 text-stone-500'
                 }`}
               >
-                <span className="text-lg">{f.emoji}</span>
-                <span className="mt-0.5 text-[10px] font-medium leading-tight">{f.label}</span>
-                <span className="text-[9px] text-stone-400">
+                <span className="text-[26px] leading-none">{f.emoji}</span>
+                <span className="mt-1 text-[11px] font-medium leading-tight">{f.label}</span>
+                <span className="text-[10px] text-stone-400">
                   {f.bonus > 0 ? `+${f.bonus}` : '기본'}
                 </span>
               </button>

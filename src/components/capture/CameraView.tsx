@@ -63,7 +63,7 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
 
   return (
     <div
-      className={`relative w-[260px] overflow-hidden rounded-[28px] border-4 border-amber-300 bg-stone-900 shadow-xl ${
+      className={`relative w-full overflow-hidden rounded-[28px] border-4 border-amber-300 bg-stone-900 shadow-xl ${
         phase === 'throwing' ? 'animate-nyang-frameshake' : ''
       }`}
       style={{ aspectRatio: '3 / 4', animationDelay: phase === 'throwing' ? '0.42s' : undefined }}
