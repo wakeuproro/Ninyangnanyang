@@ -151,12 +151,14 @@ export function CameraView({ foodEmoji, onCapture, onError }: CameraViewProps) {
 
       {/* 던지기 버튼 */}
       {phase === 'live' && (
-        <button
-          onClick={throwFood}
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-6 py-3 text-base font-bold text-amber-900 shadow-lg active:scale-90"
-        >
-          {foodEmoji} 던지기!
-        </button>
+        <div className="absolute inset-x-0 bottom-5 flex justify-center">
+          <button
+            onClick={throwFood}
+            className="btn-3d rounded-full bg-amber-400 px-8 py-3.5 text-lg font-black text-amber-900"
+          >
+            {foodEmoji} 던지기!
+          </button>
+        </div>
       )}
     </div>
   )

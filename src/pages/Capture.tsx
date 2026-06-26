@@ -163,7 +163,9 @@ export function Capture() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-4 px-5 py-6">
-      <h1 className="text-xl font-semibold text-stone-800">니냥내냥 🐱</h1>
+      <h1 className="text-2xl text-amber-500" style={{ textShadow: '0 2px 0 rgba(0,0,0,0.06)' }}>
+        니냥내냥 🐱
+      </h1>
 
       {/* 먹이 선택 (캐치 화면에서만) */}
       {phase === 'camera' && (
@@ -331,7 +333,7 @@ export function Capture() {
               </p>
               <button
                 onClick={reset}
-                className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white active:scale-95"
+                className="btn-3d rounded-full bg-amber-400 px-6 py-3 text-base font-black text-amber-900"
               >
                 🐱 또 잡기
               </button>
@@ -343,11 +345,11 @@ export function Capture() {
                 <button
                   onClick={() => save('ninyang', randomName)}
                   disabled={saveStatus === 'saving'}
-                  className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 border-amber-400 bg-amber-50 py-4 active:scale-95 disabled:opacity-50"
+                  className="btn-3d flex flex-1 flex-col items-center gap-1 rounded-3xl bg-amber-200 py-4 text-amber-900 disabled:opacity-50"
                 >
-                  <span className="text-2xl">🐱</span>
-                  <span className="text-base font-semibold text-amber-700">니냥</span>
-                  <span className="text-[11px] text-amber-600">길에서 만난 냥 · 랜덤 이름</span>
+                  <span className="text-3xl">🐱</span>
+                  <span className="text-base font-bold">니냥</span>
+                  <span className="text-[11px] text-amber-700">길에서 만난 냥 · 랜덤 이름</span>
                 </button>
                 <button
                   onClick={() => {
@@ -355,11 +357,11 @@ export function Capture() {
                     setNameInput('')
                   }}
                   disabled={saveStatus === 'saving'}
-                  className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 border-pink-400 bg-pink-50 py-4 active:scale-95 disabled:opacity-50"
+                  className="btn-3d flex flex-1 flex-col items-center gap-1 rounded-3xl bg-pink-200 py-4 text-pink-900 disabled:opacity-50"
                 >
-                  <span className="text-2xl">🏠</span>
-                  <span className="text-base font-semibold text-pink-700">내냥</span>
-                  <span className="text-[11px] text-pink-600">내 반려묘 · 이름 직접</span>
+                  <span className="text-3xl">🏠</span>
+                  <span className="text-base font-bold">내냥</span>
+                  <span className="text-[11px] text-pink-700">내 반려묘 · 이름 직접</span>
                 </button>
               </div>
             </div>
@@ -384,7 +386,7 @@ export function Capture() {
                 <button
                   onClick={() => save('naenyang', nameInput.trim() || randomName)}
                   disabled={saveStatus === 'saving'}
-                  className="flex-1 rounded-full bg-pink-500 px-4 py-2 text-sm font-medium text-white active:scale-95 disabled:opacity-50"
+                  className="btn-3d flex-1 rounded-full bg-pink-400 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                 >
                   {saveStatus === 'saving' ? '저장 중…' : '이 이름으로 내냥 도감에 넣기'}
                 </button>

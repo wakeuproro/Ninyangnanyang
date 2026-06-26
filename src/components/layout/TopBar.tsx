@@ -23,25 +23,23 @@ export function TopBar() {
     }
   }
 
-  const xpInLevel = p.xp % 100
-
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-stone-100 bg-white/90 px-4 py-2 backdrop-blur">
-      <div className="flex items-center gap-3 text-sm">
-        <span>
-          🐟 <b className="text-amber-700">{p.churu}</b>
+    <div className="sticky top-0 z-20 flex items-center justify-between gap-2 bg-white/70 px-3 py-2 backdrop-blur">
+      <div className="flex items-center gap-1.5">
+        <span className="flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-sm font-bold text-sky-700 shadow-sm">
+          🐟 {p.churu}
         </span>
-        <span>
-          🪙 <b className="text-yellow-700">{p.coins}</b>
+        <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-1 text-sm font-bold text-yellow-700 shadow-sm">
+          🪙 {p.coins}
         </span>
-        <span className="text-xs text-stone-500">
-          Lv.{p.level} <span className="text-stone-300">({xpInLevel}/100)</span>
+        <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-700 shadow-sm">
+          Lv.{p.level}
         </span>
       </div>
       <button
         onClick={charge}
         disabled={p.coins < 10 || busy}
-        className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700 active:scale-95 disabled:opacity-40"
+        className="btn-3d rounded-full bg-amber-400 px-3 py-1.5 text-[11px] font-bold text-amber-900 disabled:opacity-40 disabled:shadow-none"
       >
         🪙10 → 🐟5
       </button>

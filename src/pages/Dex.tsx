@@ -21,7 +21,9 @@ export function Dex() {
 
   return (
     <div className="px-4 py-6">
-      <h1 className="mb-4 text-xl font-semibold text-stone-800">내 도감</h1>
+      <h1 className="mb-4 text-2xl text-amber-500" style={{ textShadow: '0 2px 0 rgba(0,0,0,0.06)' }}>
+        내 도감 📖
+      </h1>
 
       {/* 니냥 / 내냥 분리 탭 */}
       <div className="mb-4 flex gap-2">
