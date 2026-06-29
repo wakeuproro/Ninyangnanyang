@@ -4,6 +4,7 @@ import { useProfile } from '@/hooks/use-profile'
 import { applyCatchRewards } from '@/lib/profile/profile.service'
 import { cutout } from '@/lib/capture/cutout'
 import { trimAndAssess, type CutoutQuality } from '@/lib/capture/trim'
+import { detectAnimal, type DetectResult } from '@/lib/capture/detect'
 import { buildContext } from '@/lib/capture/context'
 import { generateCard, type GenerateResult } from '@/lib/cards/generate'
 import { saveCatchedCard } from '@/lib/cards/card.service'
@@ -18,7 +19,7 @@ import { makeAbility } from '@/lib/cards/ability'
 import { PICKABLE_TRIBES, TRIBE_COLOR, TRIBE_LABEL, type Tribe } from '@/lib/cards/tribe'
 import type { CaptureContext, CatKind } from '@/types'
 
-type Phase = 'camera' | 'processing' | 'done' | 'error'
+type Phase = 'camera' | 'detecting' | 'rejected' | 'processing' | 'done' | 'error'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export function Capture() {
@@ -31,6 +32,7 @@ export function Capture() {
   const [phase, setPhase] = useState<Phase>('camera')
   const [camFallback, setCamFallback] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [rejected, setRejected] = useState<DetectResult | null>(null)
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
@@ -52,11 +54,8 @@ export function Capture() {
     if (profile && getFood(foodId).cost > profile.churu) setFoodId(DEFAULT_FOOD)
   }, [profile, foodId])
 
-  const process = useCallback(
-    async (blob: Blob) => {
-      const pUrl = URL.createObjectURL(blob)
-      setPhotoUrl(pUrl)
-      setPhotoBlob(blob)
+  const runCutout = useCallback(
+    async (blob: Blob, pUrl: string) => {
       setPhase('processing')
       setError(null)
       try {
@@ -88,6 +87,28 @@ export function Capture() {
       }
     },
     [foodId],
+  )
+
+  const process = useCallback(
+    async (blob: Blob) => {
+      const pUrl = URL.createObjectURL(blob)
+      setPhotoUrl(pUrl)
+      setPhotoBlob(blob)
+      setRejected(null)
+      setPhase('detecting')
+      try {
+        const det = await detectAnimal(blob)
+        if (!det.isAnimal) {
+          setRejected(det)
+          setPhase('rejected')
+          return
+        }
+      } catch {
+        // 감지 실패는 통과
+      }
+      runCutout(blob, pUrl)
+    },
+    [runCutout],
   )
 
   const onCamError = useCallback((msg: string) => {
@@ -142,6 +163,7 @@ export function Capture() {
     setPhase('camera')
     setCamFallback(false)
     setError(null)
+    setRejected(null)
     setResult(null)
     setQuality(null)
     setCutoutUrl(null)
@@ -230,6 +252,52 @@ export function Capture() {
           >
             사진 고르기
           </button>
+        </div>
+      )}
+
+      {phase === 'detecting' && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="잡은 사진"
+              className="w-[200px] rounded-2xl border-2 border-amber-300 object-cover opacity-80"
+              style={{ aspectRatio: '3 / 4' }}
+            />
+          )}
+          <p className="text-sm text-stone-500">동물이 맞는지 확인 중… 🔍</p>
+        </div>
+      )}
+
+      {phase === 'rejected' && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt="잡은 사진"
+              className="w-[200px] rounded-2xl border-2 border-amber-300 object-cover"
+              style={{ aspectRatio: '3 / 4' }}
+            />
+          )}
+          <p className="text-base font-bold text-amber-600">동물이 안 보여요 😿</p>
+          <p className="max-w-[260px] text-center text-xs text-stone-400">
+            고양이·강아지 같은 동물을 가운데 크게 비춰서 다시 찍어주세요.
+            {rejected?.top ? ` (감지: ${rejected.top})` : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={reset}
+              className="btn-3d rounded-full bg-amber-400 px-5 py-2.5 text-sm font-bold text-amber-900"
+            >
+              🐱 다시 잡기
+            </button>
+            <button
+              onClick={() => photoBlob && photoUrl && runCutout(photoBlob, photoUrl)}
+              className="rounded-full border border-stone-300 px-4 py-2.5 text-xs text-stone-400 active:scale-95"
+            >
+              그래도 만들기
+            </button>
+          </div>
         </div>
       )}
 
