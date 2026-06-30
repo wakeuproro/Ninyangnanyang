@@ -9,6 +9,15 @@ function getModel() {
   return modelPromise
 }
 
+/** 모델 미리 로드 (앱 시작 시) */
+export async function warmupDetect(): Promise<void> {
+  try {
+    await getModel()
+  } catch {
+    // 무시
+  }
+}
+
 // COCO 동물 클래스 (전 동물 확장 방향과 일치)
 const ANIMALS = new Set([
   'cat',

@@ -13,6 +13,7 @@ import { CatCard } from '@/components/card/CatCard'
 import { CardBack } from '@/components/card/CardBack'
 import { FlipCard } from '@/components/card/FlipCard'
 import { CameraView } from '@/components/capture/CameraView'
+import { CatchLoading } from '@/components/capture/CatchLoading'
 import { CatFoundReveal } from '@/components/capture/CatFoundReveal'
 import { rewardFor } from '@/lib/cards/reward'
 import { makeAbility } from '@/lib/cards/ability'
@@ -33,6 +34,7 @@ export function Capture() {
   const [camFallback, setCamFallback] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rejected, setRejected] = useState<DetectResult | null>(null)
+  const [progress, setProgress] = useState(0)
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null)
@@ -58,8 +60,9 @@ export function Capture() {
     async (blob: Blob, pUrl: string) => {
       setPhase('processing')
       setError(null)
+      setProgress(0)
       try {
-        const removed = await cutout(blob)
+        const removed = await cutout(blob, setProgress)
         const { blob: trimmed, quality: q } = await trimAndAssess(removed)
         setCutoutBlob(trimmed)
         setQuality(q)
@@ -164,6 +167,7 @@ export function Capture() {
     setCamFallback(false)
     setError(null)
     setRejected(null)
+    setProgress(0)
     setResult(null)
     setQuality(null)
     setCutoutUrl(null)
@@ -255,19 +259,7 @@ export function Capture() {
         </div>
       )}
 
-      {phase === 'detecting' && (
-        <div className="flex flex-col items-center gap-3 py-4">
-          {photoUrl && (
-            <img
-              src={photoUrl}
-              alt="잡은 사진"
-              className="w-[200px] rounded-2xl border-2 border-amber-300 object-cover opacity-80"
-              style={{ aspectRatio: '3 / 4' }}
-            />
-          )}
-          <p className="text-sm text-stone-500">동물이 맞는지 확인 중… 🔍</p>
-        </div>
-      )}
+      {phase === 'detecting' && <CatchLoading photoUrl={photoUrl} progress={0} />}
 
       {phase === 'rejected' && (
         <div className="flex flex-col items-center gap-3 py-4">
@@ -301,19 +293,7 @@ export function Capture() {
         </div>
       )}
 
-      {phase === 'processing' && (
-        <div className="flex flex-col items-center gap-3 py-4">
-          {photoUrl && (
-            <img
-              src={photoUrl}
-              alt="잡은 사진"
-              className="w-[200px] rounded-2xl border-2 border-amber-300 object-cover opacity-80"
-              style={{ aspectRatio: '3 / 4' }}
-            />
-          )}
-          <p className="text-sm text-stone-500">누끼 따고 카드 만드는 중… 🐱✨</p>
-        </div>
-      )}
+      {phase === 'processing' && <CatchLoading photoUrl={photoUrl} progress={progress} />}
       {phase === 'error' && (
         <div className="flex flex-col items-center gap-3 py-4">
           {photoUrl && (
