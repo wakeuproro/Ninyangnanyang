@@ -1,6 +1,5 @@
 import type { NewCatCard } from '@/types'
-import type { BgTheme } from '@/lib/backgrounds/theme'
-import { popartStyle } from '@/lib/backgrounds/popart'
+import { bgUrl } from '@/lib/backgrounds/theme'
 import { RarityBadge } from './RarityBadge'
 import { cutoutFeather } from './cutoutFeather'
 
@@ -11,10 +10,12 @@ interface CatCardProps {
 
 /** 카드 앞면 — 풀블리드 배경 + 누끼 고양이 + 희귀뱃지 + 이름 (정보는 뒷면) */
 export function CatCard({ card, cutoutUrl }: CatCardProps) {
-  const theme = (card.bgTheme ?? 'alley') as BgTheme
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border-2 border-stone-900 shadow-lg">
-      <div className="absolute inset-0" style={popartStyle(theme)} />
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${bgUrl(card.bgTheme)})` }}
+      />
       <img
         src={cutoutUrl}
         alt={card.name ?? '고양이 카드'}

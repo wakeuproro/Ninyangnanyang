@@ -19,3 +19,6 @@ npm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 *.local
+
+# 카드 디자인 원본(대용량 PNG) — public/bg 의 webp만 배포
+card_design/

@@ -39,7 +39,7 @@ export function generateCard(input: GenerateInput): GenerateResult {
     foodLabel: food.label,
   })
   const tribe = resolveTribe(input.tribeHint)
-  const bgTheme = pickBgTheme(context)
+  const bgTheme = pickBgTheme(context, rarity, seed)
   const abilityText = makeAbility(tribe, rarity, context)
 
   const card: NewCatCard = {

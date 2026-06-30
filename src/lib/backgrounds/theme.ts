@@ -1,15 +1,63 @@
-import type { CaptureContext } from '@/types'
+import type { CaptureContext, Rarity } from '@/types'
+import { hashSeed } from '@/lib/cards/seed'
 
-// 팝아트 배경 템플릿 키. 캐치 맥락(시간대·날씨)에 맞춰 자동 배정.
-// 실제 SVG/CSS 템플릿은 추후 components/backgrounds 에서 키별로 렌더.
-export type BgTheme = 'sunset' | 'night' | 'dawn' | 'rain' | 'snow' | 'alley' | 'day'
+// 디자인된 배경 18종 (public/bg/{key}.webp). 캐치 맥락 + 희귀도로 배정.
+export type BgTheme =
+  | 'day'
+  | 'sunset'
+  | 'night'
+  | 'dawn'
+  | 'rain'
+  | 'snow'
+  | 'fog'
+  | 'spring'
+  | 'summer'
+  | 'autumn'
+  | 'neon'
+  | 'market'
+  | 'park'
+  | 'rooftop'
+  | 'legend_aurora'
+  | 'legend_petal'
+  | 'legend_starsea'
+  | 'legend_torii'
 
-export function pickBgTheme(ctx: CaptureContext): BgTheme {
+const ALL: BgTheme[] = [
+  'day', 'sunset', 'night', 'dawn', 'rain', 'snow', 'fog',
+  'spring', 'summer', 'autumn', 'neon', 'market', 'park', 'rooftop',
+  'legend_aurora', 'legend_petal', 'legend_starsea', 'legend_torii',
+]
+const KNOWN = new Set<string>(ALL)
+
+const LEGENDS: BgTheme[] = ['legend_aurora', 'legend_petal', 'legend_starsea', 'legend_torii']
+const NIGHT_POOL: BgTheme[] = ['night', 'neon']
+const DAY_POOL: BgTheme[] = ['day', 'park', 'rooftop', 'market']
+
+function pick<T>(pool: T[], seed: string): T {
+  return pool[hashSeed(seed) % pool.length]
+}
+
+function seasonal(month: number): BgTheme {
+  if (month >= 3 && month <= 5) return 'spring'
+  if (month >= 6 && month <= 8) return 'summer'
+  if (month >= 9 && month <= 11) return 'autumn'
+  return 'day' // 겨울은 day (눈은 날씨로 따로)
+}
+
+/** 배경 배정 — 결정적(seed). 레전드는 전용 씬, 날씨/시간대 우선, 낮엔 장소·계절로 다양성. */
+export function pickBgTheme(ctx: CaptureContext, rarity: Rarity, seed: string): BgTheme {
+  if (rarity === 'legendary') return pick(LEGENDS, `${seed}|bg`)
   if (ctx.weather === 'snow') return 'snow'
   if (ctx.weather === 'rain') return 'rain'
+  if (ctx.weather === 'fog') return 'fog'
   if (ctx.timeOfDay === 'sunset') return 'sunset'
-  if (ctx.timeOfDay === 'night') return 'night'
   if (ctx.timeOfDay === 'dawn') return 'dawn'
-  if (ctx.timeOfDay === 'day') return 'day'
-  return 'alley'
+  if (ctx.timeOfDay === 'night') return pick(NIGHT_POOL, `${seed}|bg`)
+  const month = new Date(ctx.capturedAt).getMonth() + 1
+  return pick([...DAY_POOL, seasonal(month)], `${seed}|bg`)
+}
+
+export function bgUrl(theme: string | null | undefined): string {
+  const key = theme && KNOWN.has(theme) ? theme : 'day'
+  return `/bg/${key}.webp`
 }

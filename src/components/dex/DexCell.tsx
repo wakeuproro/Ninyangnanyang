@@ -1,18 +1,19 @@
 import type { CatCard } from '@/types'
-import type { BgTheme } from '@/lib/backgrounds/theme'
-import { popartStyle } from '@/lib/backgrounds/popart'
+import { bgUrl } from '@/lib/backgrounds/theme'
 import { cutoutFeather } from '@/components/card/cutoutFeather'
 import { RarityBadge } from '@/components/card/RarityBadge'
 
 export function DexCell({ card, onClick }: { card: CatCard; onClick?: () => void }) {
-  const theme = (card.bgTheme ?? 'alley') as BgTheme
   return (
     <button
       onClick={onClick}
       className="relative block overflow-hidden rounded-xl border border-stone-800 text-left active:scale-95"
       style={{ aspectRatio: '3 / 4' }}
     >
-      <div className="absolute inset-0" style={popartStyle(theme)} />
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${bgUrl(card.bgTheme)})` }}
+      />
       {card.cutoutUrl && (
         <img
           src={card.cutoutUrl}
