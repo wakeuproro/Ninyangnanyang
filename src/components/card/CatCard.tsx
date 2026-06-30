@@ -1,6 +1,6 @@
 import type { NewCatCard, Rarity } from '@/types'
 import { RARITY_ORDER } from '@/types'
-import { bgUrl } from '@/lib/backgrounds/theme'
+import { bgUrl, themeLabel } from '@/lib/backgrounds/theme'
 import { TRIBE_LABEL, TRIBE_COLOR, type Tribe } from '@/lib/cards/tribe'
 import { formatSerial } from '@/lib/cards/serial'
 
@@ -71,6 +71,15 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
           style={{ background: 'linear-gradient(125deg, transparent 42%, rgba(255,255,255,0.16) 49%, transparent 57%)' }}
         />
 
+        {/* 반짝이 (에픽+) */}
+        {(rarity === 'legendary' || rarity === 'epic') && (
+          <>
+            <span className="pointer-events-none absolute left-6 top-[30%] text-sm">✨</span>
+            <span className="pointer-events-none absolute right-7 top-[22%] text-xs">✨</span>
+            <span className="pointer-events-none absolute right-9 top-[44%] text-sm">⭐</span>
+          </>
+        )}
+
         {/* 접지 그림자 + 고양이 */}
         <div className="absolute bottom-[19%] left-1/2 h-3 w-1/2 -translate-x-1/2 rounded-[50%] bg-black/35 blur-md" />
         <img
@@ -85,6 +94,7 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
           className="absolute left-0 top-3 rounded-r-lg px-3 py-1 text-[11px] font-black tracking-wider"
           style={{ background: ribbon.bg, color: ribbon.text, boxShadow: '2px 2px 4px rgba(0,0,0,0.35)' }}
         >
+          {rarity === 'legendary' ? '👑 ' : ''}
           {rarity.toUpperCase()}
         </div>
         <div
@@ -104,6 +114,12 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
             {TRIBE_LABEL[tribe]}
           </span>
         )}
+        <span
+          className="absolute right-3 top-[34px] text-[11px] italic"
+          style={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.65)' }}
+        >
+          {themeLabel(card.bgTheme)} ♡
+        </span>
 
         {/* 하단 패널: 이름(홀로) + 타입 + 일련번호 */}
         <div
@@ -124,9 +140,14 @@ export function CatCard({ card, cutoutUrl }: CatCardProps) {
             {card.name ?? '이름 없는 냥'}
           </p>
           <div className="mt-1.5 flex items-end justify-between">
-            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/90">
-              {tribe !== 'unknown' ? TRIBE_LABEL[tribe] : 'CAT'}
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[7px] font-bold uppercase tracking-[0.15em] text-white/55">
+                Cat Collector
+              </span>
+              <span className="w-fit rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/90">
+                {tribe !== 'unknown' ? TRIBE_LABEL[tribe] : 'CAT'}
+              </span>
+            </div>
             <span className="font-mono text-[9px] text-white/70">
               {formatSerial(rarity, dateIso, card.dexNo)}
             </span>

@@ -61,3 +61,28 @@ export function bgUrl(theme: string | null | undefined): string {
   const key = theme && KNOWN.has(theme) ? theme : 'day'
   return `/bg/${key}.webp`
 }
+
+const THEME_LABEL: Record<string, string> = {
+  day: 'Daylight',
+  sunset: 'Sunset',
+  night: 'Night',
+  dawn: 'Dawn',
+  rain: 'Rainy',
+  snow: 'Snowy',
+  fog: 'Foggy',
+  spring: 'Spring',
+  summer: 'Summer',
+  autumn: 'Autumn',
+  neon: 'Neon City',
+  market: 'Market',
+  park: 'Park',
+  rooftop: 'Rooftop',
+  legend_aurora: 'Aurora',
+  legend_petal: 'Petals',
+  legend_starsea: 'Star Sea',
+  legend_torii: 'Torii',
+}
+
+export function themeLabel(theme: string | null | undefined): string {
+  return (theme && THEME_LABEL[theme]) || 'Daylight'
+}
